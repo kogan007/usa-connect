@@ -5,11 +5,33 @@ import { client } from '../common';
 import type { Post } from './types';
 
 type Response = Post[];
-type Variables = void; // as react-query-kit is strongly typed, we need to specify the type of the variables as void in case we don't need them
+type Variables = {
+  userId: number;
+};
 
 export const usePosts = createQuery<Response, Variables, AxiosError>({
   queryKey: ['posts'],
-  fetcher: () => {
-    return client.get(`posts`).then((response) => response.data.posts);
+  fetcher: (variables) => {
+    return client
+      .post('', {
+        variables: {
+          userId: String(variables.userId),
+        },
+        query: `
+        query GetPosts($userId: JSON) {
+          Posts(where: { createdBy: { equals: $userId }}) {
+            docs {
+              description
+              id
+              createdAt
+              image {
+                url
+              }
+            }
+          }
+        }
+      `,
+      })
+      .then((res) => res.data.data.Posts.docs);
   },
 });

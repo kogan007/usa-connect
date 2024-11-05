@@ -1,22 +1,18 @@
-import {
-  Inbox,
-  type LucideIcon,
-} from 'lucide-react-native';
+import { Inbox, type LucideIcon } from 'lucide-react-native';
 import React from 'react';
 
+import { type Post as PostType, usePosts, useUser } from '@/api';
+import { Box } from '@/components/ui/box';
 import { Center } from '@/components/ui/center';
 import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
-import {
-  ChevronRightIcon,
-  GlobeIcon,
-  Icon,
-} from '@/components/ui/icon';
+import { ChevronRightIcon, GlobeIcon, Icon } from '@/components/ui/icon';
+import { Image } from '@/components/ui/image';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { SafeAreaView, ScrollView } from '@/ui';
-
+import { useAuth } from '@/core';
+import { SafeAreaView, ScrollView, View } from '@/ui';
 
 interface UserStats {
   friends: string;
@@ -54,11 +50,12 @@ const accountData: AccountCardType[] = [
     subText: 'Уведомления',
     endIcon: ChevronRightIcon,
   },
-
 ];
 
-
 export default function Profile() {
+  const token = useAuth().token?.access;
+  const { data } = useUser({ variables: { token: token! } });
+
   return (
     <SafeAreaView className="size-full">
       <VStack className="size-full bg-background-0">
@@ -83,10 +80,10 @@ export default function Profile() {
                       <VStack space="lg" className="items-center">
                         <VStack className="w-full items-center gap-1">
                           <Text size="2xl" className="text-dark font-roboto">
-                            Корней
+                            {data?.username}
                           </Text>
                           <Text className="text-typograpphy-700 font-roboto text-sm">
-                            Филадельфия
+                            {data?.city.name}
                           </Text>
                         </VStack>
                         <>
@@ -96,6 +93,12 @@ export default function Profile() {
                         </>
                       </VStack>
                     </Center>
+                    <VStack space="2xl">
+                      <Heading className="mx-6 font-roboto" size="xl">
+                        Посты
+                      </Heading>
+                      {data && <Posts userId={data.id} />}
+                    </VStack>
                     <VStack className="mx-6" space="2xl">
                       <Heading className="font-roboto" size="xl">
                         Аккаунт
@@ -117,6 +120,59 @@ export default function Profile() {
     </SafeAreaView>
   );
 }
+
+const Posts = ({ userId }: { userId: number }) => {
+  const {
+    data: posts,
+    isPending,
+    // refetch,
+  } = usePosts({
+    variables: { userId: userId },
+  });
+
+  // const [refreshing, setRefreshing] = useState(false);
+
+  // const onRefresh = useCallback(() => {
+  //   setRefreshing(true);
+  //   refetch();
+  //   setRefreshing(false);
+  // }, [refetch]);
+
+  if (isPending) {
+    return <Text>Loading</Text>;
+  }
+
+  return (
+    <VStack className="items-center justify-between">
+      
+        <View
+          className="flex w-full flex-row flex-wrap"
+          
+        >
+          {posts!.map((post) => (
+            <Post post={post} key={post.id} />
+          ))}
+        </View>
+      
+    </VStack>
+  );
+};
+
+const Post = ({ post }: { post: PostType }) => {
+  return (
+<View className='w-1/3'>
+      <Box>
+      <Image
+        source={`http://localhost:3000${post.image.url}`}
+        alt={'test'}
+        size="none"
+        className="h-40"
+        resizeMode="cover"
+      />
+    </Box>
+    </View>
+  );
+};
 
 const AccountData = ({
   item,
@@ -162,7 +218,6 @@ const UserData = ({ item }: { item: UserStats }) => {
           {item.followersText}
         </Text>
       </VStack>
-      
 
       <Divider orientation="vertical" className="h-10" />
       <VStack className="items-center px-4 py-3" space="xs">

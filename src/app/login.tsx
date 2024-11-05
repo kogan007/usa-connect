@@ -20,7 +20,6 @@ export default function Login() {
         router.push("/")
       }
     })
-    console.log(data);
     // signIn({ access: 'access-token', refresh: 'refresh-token' });
     // router.push('/');
   };

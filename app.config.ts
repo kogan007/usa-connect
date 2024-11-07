@@ -24,7 +24,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "USA Connect",
   description: `${Env.NAME} Mobile App`,
-  owner: "Corey Kogan",
+  owner: "coreykogan",
   scheme: Env.SCHEME,
   slug: 'usaconnect',
   version: Env.VERSION.toString(),
@@ -43,6 +43,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: Env.BUNDLE_ID,
+    infoPlist: {
+      NSPhotoLibraryUsageDescription: "Camera roll for creating posts",
+      NSPhotoLibraryAddUsageDescription: "Camera roll for creating posts"
+    }
   },
   experiments: {
     typedRoutes: true,

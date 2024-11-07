@@ -17,6 +17,7 @@ export const useCities = createQuery<Response, Variables, AxiosError>({
             docs {
               name
               id
+              coordinates
             }
           }
         }

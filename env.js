@@ -36,9 +36,9 @@ require('dotenv').config({
 
 const BUNDLE_ID = 'com.usa-connect'; // ios bundle id
 const PACKAGE = 'com.usa-connect'; // android package name
-const NAME = 'usa-connect'; // app name
-const EXPO_ACCOUNT_OWNER = 'expo-owner'; // expo account owner
-const EAS_PROJECT_ID = 'c3e1075b-6fe7-4686-aa49-35b46a229044'; // eas project id
+const NAME = 'usaconnect'; // app name
+const EXPO_ACCOUNT_OWNER = 'coreykogan'; // expo account owner
+const EAS_PROJECT_ID = '7a588c72-40a4-4294-8849-97e654c1a581'; // eas project id
 const SCHEME = 'usa-connect'; // app scheme
 
 /**
@@ -79,16 +79,16 @@ const client = z.object({
   VERSION: z.string(),
 
   // ADD YOUR CLIENT ENV VARS HERE
-  API_URL: z.string(),
-  VAR_NUMBER: z.number(),
-  VAR_BOOL: z.boolean(),
+  // API_URL: z.string(),
+  // VAR_NUMBER: z.number(),
+  // VAR_BOOL: z.boolean(),
 });
 
 const buildTime = z.object({
   EXPO_ACCOUNT_OWNER: z.string(),
   EAS_PROJECT_ID: z.string(),
   // ADD YOUR BUILD TIME ENV VARS HERE
-  SECRET_KEY: z.string(),
+  // SECRET_KEY: z.string(),
 });
 
 /**
@@ -103,9 +103,9 @@ const _clientEnv = {
   VERSION: packageJSON.version,
 
   // ADD YOUR ENV VARS HERE TOO
-  API_URL: process.env.API_URL,
-  VAR_NUMBER: Number(process.env.VAR_NUMBER),
-  VAR_BOOL: process.env.VAR_BOOL === 'true',
+  // API_URL: process.env.API_URL,
+  // VAR_NUMBER: Number(process.env.VAR_NUMBER),
+  // VAR_BOOL: process.env.VAR_BOOL === 'true',
 };
 
 /**
@@ -115,7 +115,7 @@ const _buildTimeEnv = {
   EXPO_ACCOUNT_OWNER,
   EAS_PROJECT_ID,
   // ADD YOUR ENV VARS HERE TOO
-  SECRET_KEY: process.env.SECRET_KEY,
+  // SECRET_KEY: process.env.SECRET_KEY,
 };
 
 /**

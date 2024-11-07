@@ -21,8 +21,12 @@ export const useUser = createQuery<Response, Variables, AxiosError>({
                   email
                   username
                   id
+                  avatar {
+                    url
+                  }
                   city {
                     name
+                    id
                   }
               }
           }

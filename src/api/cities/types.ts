@@ -3,4 +3,8 @@ export type City = {
   name: string
   updatedAt: string
   createdAt: string
+  coordinates: {
+    latitude: number,
+    longitude: number
+  }
 }

@@ -9,8 +9,13 @@ import { StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import { APIProvider } from '@/api';
+import {
+  RootScaleProvider,
+  useRootScale,
+} from '@/components/root-scale-context';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { hydrateAuth, loadSelectedTheme } from '@/core';
 import { useThemeConfig } from '@/core/use-theme-config';
@@ -28,29 +33,48 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
-    <GluestackUIProvider>
-      <Providers>
-        <Stack>
-          <Stack.Screen name="(app)" options={{ headerShown: false }} />
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-        </Stack>
-      </Providers>
-    </GluestackUIProvider>
+    
+      <RootScaleProvider>
+        <Providers>
+        
+          <Stack>
+            <Stack.Screen name="(app)" options={{ headerShown: false }} />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+          </Stack>
+          
+        </Providers>
+      </RootScaleProvider>
+   
   );
 }
 
 function Providers({ children }: { children: React.ReactNode }) {
   const theme = useThemeConfig();
+  const { scale } = useRootScale();
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: scale.value },
+        {
+          translateY: (1 - scale.value) * -150,
+        },
+      ],
+    };
+  });
   return (
     <GestureHandlerRootView
       style={styles.container}
-      className={theme.dark ? `dark` : undefined}
+      className={theme.dark ? `` : undefined}
     >
       <KeyboardProvider>
         <ThemeProvider value={theme}>
           <APIProvider>
             <BottomSheetModalProvider>
-              {children}
+              <Animated.View style={[{ flex: 1, borderRadius: 50}, animatedStyle]}>
+              <GluestackUIProvider>
+                {children}
+                </GluestackUIProvider>
+              </Animated.View>
               <FlashMessage position="top" />
             </BottomSheetModalProvider>
           </APIProvider>

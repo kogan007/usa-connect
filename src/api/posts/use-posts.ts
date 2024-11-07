@@ -6,7 +6,8 @@ import type { Post } from './types';
 
 type Response = Post[];
 type Variables = {
-  userId: number;
+  userId?: number;
+  cityId?: number;
 };
 
 export const usePosts = createQuery<Response, Variables, AxiosError>({
@@ -16,10 +17,13 @@ export const usePosts = createQuery<Response, Variables, AxiosError>({
       .post('', {
         variables: {
           userId: String(variables.userId),
+          cityId: String(variables.cityId),
         },
         query: `
-        query GetPosts($userId: JSON) {
-          Posts(where: { createdBy: { equals: $userId }}) {
+        query GetPosts(${variables.userId ? '$userId: JSON,' : ''} ${variables.cityId ? '$cityId: JSON' : ''}) {
+          Posts(${variables.userId ? 'where: { createdBy: { equals: $userId }},' : ''}
+          ${variables.cityId ? 'where: { city: { equals: $cityId }},' : ''}
+          ) {
             docs {
               description
               id
@@ -32,6 +36,6 @@ export const usePosts = createQuery<Response, Variables, AxiosError>({
         }
       `,
       })
-      .then((res) => res.data.data.Posts.docs);
+      .then((res) => res.data.data.Posts.docs)
   },
 });

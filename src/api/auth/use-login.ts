@@ -11,6 +11,9 @@ type Response = {
   data: {
     loginUser: {
       token: string
+      user: {
+        username: string
+      }
     }
   }
 }
@@ -28,7 +31,7 @@ export const useLogin = createMutation<Response, Variables, AxiosError>({
               token
               user {
                 id
-                email
+                username
               }
             }
           }

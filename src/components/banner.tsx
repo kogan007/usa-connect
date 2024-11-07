@@ -1,17 +1,30 @@
 
+import { Bell, Earth, MessageCircleMore } from "lucide-react-native";
+import React from "react";
+
+import { Heading } from "./ui/heading";
 import { HStack } from "./ui/hstack";
-import { Text } from "./ui/text";
+import { Pressable } from "./ui/pressable";
 
 
 const Banner = () => {
   return (
     <HStack
-      className="mt-6 h-16 items-center justify-center bg-zinc-800 p-4"
+      className="h-16 items-center p-4"
       space="sm"
     >
-      <Text className="text-content-0 text-white" size="md">
-        Бета Версия
-      </Text>
+      <HStack>
+        <Earth className="text-black" />
+        <Heading className="ml-2">Connect</Heading>
+      </HStack>
+      <HStack className="ml-auto items-center">
+        <Pressable>
+          <Bell className="text-black" />
+        </Pressable>
+        <Pressable className="ml-2">
+          <MessageCircleMore className="mb-1 text-black" />
+        </Pressable>
+      </HStack>
       
     </HStack>
   );

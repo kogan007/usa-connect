@@ -1,14 +1,30 @@
-import { Inbox, type LucideIcon } from 'lucide-react-native';
+import { Link, useLocalSearchParams } from 'expo-router';
+import {
+  Ellipsis,
+  Inbox,
+  type LucideIcon,
+  Menu,
+  MessageCircle,
+  UserRoundPlus,
+} from 'lucide-react-native';
 import React from 'react';
 
-import { type Post as PostType, usePosts, useUser } from '@/api';
+import {
+  type Post as PostType,
+  usePosts,
+  useUser,
+  useUserByUsername,
+} from '@/api';
+import { Avatar, AvatarBadge, AvatarImage } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
+import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
 import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { ChevronRightIcon, GlobeIcon, Icon } from '@/components/ui/icon';
 import { Image } from '@/components/ui/image';
+import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useAuth } from '@/core';
@@ -22,17 +38,6 @@ interface UserStats {
   posts: string;
   postsText: string;
 }
-
-const userData: UserStats[] = [
-  {
-    friends: '45K',
-    friendsText: 'Друзей',
-    followers: '500M',
-    followersText: 'Подписчиков',
-    posts: '346',
-    postsText: 'Постов',
-  },
-];
 
 interface AccountCardType {
   iconName: LucideIcon | typeof Icon;
@@ -53,12 +58,34 @@ const accountData: AccountCardType[] = [
 ];
 
 export default function Profile() {
+  const { profile } = useLocalSearchParams();
+  const { data } = useUserByUsername({
+    variables: { username: profile as string },
+  });
   const token = useAuth().token?.access;
-  const { data } = useUser({ variables: { token: token! } });
+  const { data: loggedInUser } = useUser({ variables: { token: token! } });
+
+  const userData: UserStats[] = [
+    {
+      friends: '45K',
+      friendsText: 'Друзей',
+      followers: String(data?.followerCount),
+      followersText: 'Подписчиков',
+      posts: String(data?.postCount),
+      postsText: 'Постов',
+    },
+  ];
 
   return (
     <SafeAreaView className="size-full">
       <VStack className="size-full bg-background-0">
+        <HStack className="flex justify-end px-2">
+          <Link asChild href="/settings">
+            <Pressable>
+              <Menu className="text-black" />
+            </Pressable>
+          </Link>
+        </HStack>
         <VStack className="size-full">
           <HStack className="size-full">
             <VStack className="w-full flex-1">
@@ -68,36 +95,59 @@ export default function Profile() {
                   contentContainerStyle={{ paddingBottom: 160, flexGrow: 1 }}
                 >
                   <VStack className="size-full pb-8" space="2xl">
-                    <HStack className="absolute hidden px-10 pt-6 md:flex">
-                      <Text className="font-roboto text-typography-900">
-                        home &gt; {` `}
-                      </Text>
-                      <Text className="font-semibold text-typography-900 ">
-                        profile
-                      </Text>
-                    </HStack>
-                    <Center className="mt-6 w-full pb-4 md:mt-14 md:px-10 md:pt-6">
+                    <Center className="mt-4 w-full pb-2 md:mt-14 md:px-10 md:pt-6">
                       <VStack space="lg" className="items-center">
+                        <Avatar size="2xl" className="bg-primary-600">
+                          {data && (
+                            <>
+                              <AvatarImage
+                                alt="Profile Image"
+                                source={{
+                                  uri: `http://localhost:3000${data.user.avatar.url}`,
+                                }}
+                              />
+                              <AvatarBadge />
+                            </>
+                          )}
+                        </Avatar>
                         <VStack className="w-full items-center gap-1">
                           <Text size="2xl" className="text-dark font-roboto">
-                            {data?.username}
+                            {data?.user.username}
                           </Text>
                           <Text className="text-typograpphy-700 font-roboto text-sm">
-                            {data?.city.name}
+                            {data?.user.city.name}
                           </Text>
                         </VStack>
+
                         <>
                           {userData.map((item, index) => (
                             <UserData item={item} key={index} />
                           ))}
                         </>
+                        {data && loggedInUser!.id !== data.user.id && (
+                          <HStack className="w-full items-center gap-1">
+                            <Button
+                              variant="outline"
+                              className="flex items-center"
+                            >
+                              <ButtonText>Follow</ButtonText>
+                              <ButtonIcon as={UserRoundPlus} />
+                            </Button>
+                            <Button>
+                              <ButtonIcon as={MessageCircle} />
+                            </Button>
+                            <Button>
+                              <ButtonIcon as={Ellipsis} />
+                            </Button>
+                          </HStack>
+                        )}
                       </VStack>
                     </Center>
                     <VStack space="2xl">
                       <Heading className="mx-6 font-roboto" size="xl">
                         Посты
                       </Heading>
-                      {data && <Posts userId={data.id} />}
+                      {data && <Posts userId={data.user.id} />}
                     </VStack>
                     <VStack className="mx-6" space="2xl">
                       <Heading className="font-roboto" size="xl">
@@ -144,32 +194,31 @@ const Posts = ({ userId }: { userId: number }) => {
 
   return (
     <VStack className="items-center justify-between">
-      
-        <View
-          className="flex w-full flex-row flex-wrap"
-          
-        >
-          {posts!.map((post) => (
-            <Post post={post} key={post.id} />
-          ))}
-        </View>
-      
+      <View className="flex w-full flex-row flex-wrap">
+        {posts!.map((post) => (
+          <Post post={post} key={post.id} />
+        ))}
+      </View>
     </VStack>
   );
 };
 
 const Post = ({ post }: { post: PostType }) => {
   return (
-<View className='w-1/3'>
+    <View className="w-1/3">
       <Box>
-      <Image
-        source={`http://localhost:3000${post.image.url}`}
-        alt={'test'}
-        size="none"
-        className="h-40"
-        resizeMode="cover"
-      />
-    </Box>
+        <Link href={`/p/${post.id}`} asChild>
+          <Pressable>
+            <Image
+              source={`http://localhost:3000${post.image.url}`}
+              alt={'test'}
+              size="none"
+              className="h-40"
+              resizeMode="cover"
+            />
+          </Pressable>
+        </Link>
+      </Box>
     </View>
   );
 };

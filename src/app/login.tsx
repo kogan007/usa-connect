@@ -6,7 +6,6 @@ import type { LoginFormProps } from '@/components/login-form';
 import { LoginForm } from '@/components/login-form';
 import { useAuth } from '@/core';
 import { FocusAwareStatusBar } from '@/ui';
-
 export default function Login() {
   const router = useRouter();
   const signIn = useAuth.use.signIn();
@@ -15,7 +14,7 @@ export default function Login() {
   const onSubmit: LoginFormProps['onSubmit'] = (data) => {
     login(data, {
       onSuccess: (res) => {
-        const token = res.data.loginUser.token
+        const token = res.sessionToken
         signIn({ access: token });
         router.push("/")
       }

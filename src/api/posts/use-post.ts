@@ -4,9 +4,9 @@ import { createQuery } from 'react-query-kit';
 import { client } from '../common';
 import type { Post } from './types';
 
-type Response = Post;
+type Response = Post
 type Variables = {
-  postId: number
+  postId: string
 };
 
 export const usePost = createQuery<Response, Variables, AxiosError>({
@@ -18,14 +18,16 @@ export const usePost = createQuery<Response, Variables, AxiosError>({
           postId: variables.postId,
         },
         query: `
-          query Post($postId: Int!) {
-            Post(id: $postId) {
-                description
+          query Post($postId: ID!) {
+            post(where: { id: $postId }) {
+                content
                 id
-                image {
+                media {
+                  image {
                     url
                     width
                     height
+                  }
                 }
                 createdBy {
                     id
@@ -34,11 +36,14 @@ export const usePost = createQuery<Response, Variables, AxiosError>({
                         url
                     }
                 }
+                likesCount
             }
         }
 
       `,
       })
-      .then((res) => res.data.data.Post);
+      .then((res) => {
+        return res.data.data.post
+      });
   },
 });

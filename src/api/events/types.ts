@@ -1,23 +1,23 @@
 export type Event = {
   name: string
-  id: number
-  description: {
-    children: {
-      text: string
-    }[] 
-  }[]
+  id: string
   media: {
-    url: string
-    width: number
-    height: number
+    id: string
+    image: {
+      url: string
+    }
   }[]
-  city: {
+  venue: {
     name: string
-  }
-  address: {
-    coordinates: {
-      latitude: number
-      longitude: number
+    address: {
+      street: string
+      city: string
+      state: string
+      zipcode: number
+      coordinates: {
+        latitude: number
+        longitude: number
+      }
     }
   }
 }

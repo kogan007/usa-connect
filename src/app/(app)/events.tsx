@@ -1,36 +1,26 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import WheelPicker from '@quidone/react-native-wheel-picker';
-import React, { useRef, useState } from 'react';
-import MapView, { Marker } from 'react-native-maps';
+import React, { useCallback, useRef, useState } from 'react';
+import MapView from 'react-native-maps';
 import PagerView from 'react-native-pager-view';
 
-import { type Event, useCities, useEvents, useUser } from '@/api';
+import { type City, type Event, useCities, useEvents, useUser } from '@/api';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { useAuth } from '@/core';
-import { Image } from '@/ui';
+import { Image, SafeAreaView } from '@/ui';
 import { ActivityIndicator, FocusAwareStatusBar, ScrollView, View } from '@/ui';
 
 export default function Events() {
-  const token = useAuth().token?.access;
-  const { data: user } = useUser({ variables: { token: token! } });
+
+  const { data: user } = useUser();
 
   const { data, isPending, isError} = useCities();
-  const userCity = user!.city.id;
-  const [selectedCity, setSelectedCity] = useState(
-    data
-      ? {
-          value: userCity,
-          coordinates: data.find((city) => city.id === userCity)!.coordinates,
-        }
-      : { value: undefined, coordinates: null},
-  );
+  const userCity = user!.city;
 
-  const bottomSheetRef = useRef(null);
   if (isPending) {
     return (
       <View className="flex-1 justify-center  p-3">
@@ -48,18 +38,46 @@ export default function Events() {
     );
   }
 
-  const options = data.map((city) => ({
+
+  return (
+    <SafeAreaView className='size-full flex-1'>
+      <EventsWrap userCity={userCity} cities={data} />
+    </SafeAreaView>
+  );
+}
+
+const EventsWrap = ({ userCity, cities,  }: { userCity: City, cities: City[] }) => {
+  const [selectedCity, setSelectedCity] = useState(
+    {
+      value: userCity.id,
+      label: userCity.name,
+      coordinates: cities.find((city) => city.id === userCity.id)!.coordinates,
+    }
+  );
+  const bottomSheetRef = useRef(null);
+  const openSheet = useCallback(() => {
+    if (bottomSheetRef.current) {
+      const sheet = bottomSheetRef.current as any
+      sheet.expand()  
+    }
+  }, [])
+
+  const options = cities.map((city) => ({
     label: city.name,
     value: city.id,
     coordinates: city.coordinates,
   }));
+
   return (
-    <View className="flex-1 items-center">
+    <View className="items-center">
       <VStack className="mt-2 w-full px-4">
-        <HStack></HStack>
+        <HStack>
+          <Button onPress={openSheet}><ButtonText>{selectedCity.label}</ButtonText></Button>
+        </HStack>
         {selectedCity.value && (<EventsContainer city={selectedCity} />)}
       </VStack>
       <BottomSheet
+        index={-1}
         containerStyle={{ zIndex: 10 }}
         snapPoints={['40%']}
         enablePanDownToClose
@@ -67,19 +85,18 @@ export default function Events() {
       >
         <BottomSheetView className="z-10 flex-1 items-center">
           <WheelPicker
+            width="100%"
             data={options}
             value={selectedCity.value}
             onValueChanged={({ item }) =>
-              setSelectedCity({
-                coordinates: item.coordinates,
-                value: item.value,
-              })
+              setSelectedCity(item)
             }
           />
         </BottomSheetView>
       </BottomSheet>
     </View>
-  );
+  )
+
 }
 
 type Coordinates = {
@@ -90,7 +107,7 @@ const EventsContainer = ({
 }: {
   city: {
     coordinates: Coordinates;
-    value: number;
+    value: string;
   };
 }) => {
   const { data, isPending, isError } = useEvents({
@@ -165,7 +182,7 @@ const EventMap = ({ data, cityCoordinates }: { data: Event[], cityCoordinates: C
         bottom: 0,
       }}
     >
-      {data.map((event) => (
+      {/* {data.map((event) => (
         <Marker
           key={event.id}
           coordinate={{
@@ -173,7 +190,7 @@ const EventMap = ({ data, cityCoordinates }: { data: Event[], cityCoordinates: C
             longitude: event.address.coordinates.longitude,
           }}
         />
-      ))}
+      ))} */}
     </MapView>
   );
 };
@@ -196,7 +213,7 @@ const EventItem = ({ event }: { event: Event }) => {
       <Box className="w-full rounded">
         <Image
           className="h-64"
-          source={`http://localhost:3000${event.media[0].url}`}
+          source={`${event.media[0].url}`}
           alt={'test'}
           contentFit="cover"
         />

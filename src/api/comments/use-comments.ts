@@ -6,7 +6,7 @@ import type { Comment } from './types';
 
 type Response = Comment[];
 type Variables = {
-  postId: number
+  postId: string
 };
 
 export const useComments = createQuery<Response, Variables, AxiosError>({
@@ -18,23 +18,23 @@ export const useComments = createQuery<Response, Variables, AxiosError>({
           postId: variables.postId,
         },
         query: `
-          query Comments($postId: JSON!) {
-            Comments(where: { post: { equals: $postId } }) {
-                docs {
-                    content
-                    id
-                    author {
-                        username
-                        avatar {
-                            url
-                        }
+          query Comments($postId: ID!) {
+            comments(where: { post: { id: { equals: $postId } } }) {
+                content
+                id
+                author {
+                    username
+                    avatar {
+                        url
                     }
-                    createdAt
                 }
+                createdAt
             }
         }
       `,
       })
-      .then((res) => res.data.data.Comments.docs);
+      .then((res) => {
+        return res.data.data.comments
+      });
   },
 });

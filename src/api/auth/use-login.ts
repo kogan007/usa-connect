@@ -1,41 +1,43 @@
 import { type AxiosError } from 'axios';
 import { createMutation } from 'react-query-kit';
 
-import { client } from '../common';
+import { client, queryClient } from '../common';
 
 type Variables = {
   email: string
   password: string
 }
 type Response = {
-  data: {
-    loginUser: {
-      token: string
-      user: {
-        username: string
-      }
-    }
-  }
+  sessionToken: string
 }
 
 export const useLogin = createMutation<Response, Variables, AxiosError>({
-  mutationFn: async (variables) =>
-    client({
-      url: "",
-      method: 'POST',
-      data: {
-        variables,
+  onSuccess: () => {
+    console.log("sdjksajdksajdsa")
+    queryClient.invalidateQueries({ queryKey: ["me"] })
+  },
+  mutationFn: async (variables) => {
+    return client.post("/", 
+      {
+        variables: {
+          username: variables.email,
+          password: variables.password
+        },
         query: `
-          mutation Login($email: String!, $password: String! )  {
-            loginUser(email: $email, password: $password) {
-              token
-              user {
-                id
-                username
-              }
+          mutation AuthenticateUserWithPassword ($username: String!, $password: String!) {
+            authenticateWithPassword(username: $username, password: $password) {
+                ... on ItemAuthenticationWithPasswordSuccess {
+                    sessionToken
+                }
             }
           }
+
       `,
-      },
-    }).then(res => res.data),
+      }).then(res => {
+      return res.data.data.authenticateWithPassword
+    })},
+    onError: (error) => {
+      console.log(error.message)
+      console.log(error.response)
+    }
 });

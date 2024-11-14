@@ -39,6 +39,7 @@ export default function RootLayout() {
         
           <Stack>
             <Stack.Screen name="(app)" options={{ headerShown: false }} />
+            <Stack.Screen name="(inbox)" options={{ headerShown: true }} />
             <Stack.Screen name="login" options={{ headerShown: false }} />
           </Stack>
           

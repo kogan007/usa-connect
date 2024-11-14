@@ -6,40 +6,44 @@ import type { Event } from './types';
 
 type Response = Event[];
 type Variables = {
-  cityId: number;
+  cityId: string;
 };
 
 export const useEvents = createQuery<Response, Variables, AxiosError>({
-  queryKey: ['posts'],
+  queryKey: ['events'],
   fetcher: (variables) => {
+    console.log(variables.cityId)
     return client
       .post('', {
         variables: {
           cityId: String(variables.cityId),
         },
         query: `
-          query Events($cityId: JSON) {
-            Events(where: { city: { equals: $cityId } }) {
-                docs {
-                    name
-                    id
-                    media {
-                        url
-                        width
-                        height
-                    }
-                    city {
-                        name
-                    }
-                    description
-                    address {
-                      coordinates
-                    }
+          query Events ($cityId: ID!) {
+            events(where: { city: { id: { equals: $cityId } } }) {
+              name
+              id
+              media {
+                id
+                image {
+                    url
                 }
+              }
+              venue {
+                name
+                address {
+                  street
+                  city
+                  state
+                  zipcode
+                  coordinates
+                }
+              }
             }
           }
+
       `,
       })
-      .then((res) => res.data.data.Events.docs)
+      .then((res) => res.data.data.events)
   },
 });

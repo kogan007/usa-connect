@@ -6,54 +6,57 @@ import { client } from '../common';
 
 
 type Response = {
-  user: User
-  postCount: number
-  followerCount: number
-  followingCount: number
-};
+  user: User & {
+    amFollowing: 0 | 1
+  }
+  likesCount: number
+}
 type Variables = {
   username: string
+  loggedInUsername: string
 }; 
 
 export const useUserByUsername = createQuery<Response, Variables, AxiosError>({
   queryKey: ['user'],
   fetcher: (variables) => {
+    const date = new Date()
+    date.setDate(date.getDate() - 1)
     return client.post("", {
       variables: {
-        username: variables.username
+        username: variables.username,
+        me: variables.loggedInUsername,
+        storyFilter: date.toISOString()
       },
       query: `
-       query Users ($username: String!) {
-          Users(where: { username: { equals: $username } }) {
-              docs {
-                  username
-                  role
-                  id
-                  avatar {
-                      url
-                  }
-                  city {
-                      name
-                  }
+       query User($username: String!, $me: String!, $storyFilter: DateTime) {
+          user(where: { username: $username }) {
+              username
+              role
+              id
+              avatar {
+                  url
               }
+              city {
+                  name
+              }
+              storiesCount(where: { createdAt: { gte: $storyFilter }})
+              followersCount
+              followingCount
+              postsCount
+              amFollowing: followersCount(where: { follower: { username: { equals: $me } } })
           }
-          countPosts(where: { username: { equals: $username }}) {
-            totalDocs
-          }
-          countFollows(where: { followingUsername: { equals: $username } }) {
-            totalDocs
-          }
-          followingCount: countFollows(where: { followerUsername: { equals: $username } }) {
-            totalDocs
-          }
+          likesCount(
+            where: { post: { createdBy: { username: { equals: $username }}}}
+          )
         }
+
       `
     
-    }).then(res => ({
-      user: res.data.data.Users.docs[0],
-      postCount: res.data.data.countPosts.totalDocs,
-      followerCount: res.data.data.countFollows.totalDocs,
-      followingCount: res.data.data.followingCount.totalDocs,
-    }))
+    }).then(res => {
+      return {
+        user: res.data.data.user,
+        likesCount: res.data.data.likesCount
+      }
+    })
   },
 });

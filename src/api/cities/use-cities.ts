@@ -12,17 +12,16 @@ export const useCities = createQuery<Response, Variables, AxiosError>({
   fetcher: () => {
     return client.post("", {
       query: `
-        query {
-          Cities {
-            docs {
+        query Cities {
+          cities {
               name
               id
               coordinates
-            }
           }
         }
+
       `
-    }).then(res => res.data.data.Cities.docs);
+    }).then(res => res.data.data.cities);
   },
 });
 

@@ -8,5 +8,9 @@ export type User = {
   avatar: {
     url: string
   }
-  id: number
+  id: string
+  followersCount: number
+  followingCount: number
+  postsCount: number
+  storiesCount: number
 }

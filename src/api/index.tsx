@@ -3,6 +3,11 @@ export * from './cities'
 export * from './comments'
 export * from './common';
 export * from './events'
+export * from './followers'
+export * from './likes'
+export * from './notifications'
 export * from './posts';
+export * from './search'
+export * from './stories'
 export * from './types';
 export * from './user'

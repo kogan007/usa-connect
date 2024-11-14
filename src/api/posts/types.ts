@@ -1,12 +1,11 @@
 export type Post = {
-  description: string;
-  id: number;
+  content: string;
+  id: string;
   createdAt: string;
-  image: {
-    url: string;
-    width: number
-    height: number
-  };
+  media: {
+    image: Image
+  }[]
+  likesCount: number
   createdBy: {
     id: number
     username: string
@@ -15,3 +14,9 @@ export type Post = {
     }
   }
 };
+
+type Image = {
+  url: string;
+  width: number
+  height: number
+}

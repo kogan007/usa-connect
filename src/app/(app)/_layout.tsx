@@ -1,10 +1,12 @@
-/* eslint-disable react/no-unstable-nested-components */
+
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, SplashScreen, Stack, usePathname } from 'expo-router';
-import { Calendar, CirclePlus, House,UserIcon } from 'lucide-react-native';
+import { Calendar, House, Plus, Search, UserIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect } from 'react';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView, View } from 'react-native';
 
 import { useUser } from '@/api';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
@@ -28,148 +30,219 @@ export default function TabLayout() {
   //   return <Redirect href="/login" />;
   // }
 
-
   return (
-    <SafeAreaView className="size-full">
-      <Stack >
+    <View className="size-full">
+      <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="events" options={{ headerShown: false }}/>
-        <Stack.Screen name="new-post" options={{ headerShown: false }}/>
-        <Stack.Screen name="[profile]"options={{ headerShown: false }} />
-        <Stack.Screen name="p/[id]" options={{ headerShown: false, presentation: "modal" }}/>
+        <Stack.Screen name="search" options={{ headerShown: false }} />
+        <Stack.Screen name="new-post" options={{ headerShown: false }} />
+        <Stack.Screen name="events" options={{ headerShown: false }} />
+        <Stack.Screen name="[profile]" options={{ headerShown: false }} />
+        <Stack.Screen name="stories/[profile]" options={{ presentation: "containedModal"}} />
+        <Stack.Screen
+          name="p/[id]"
+          options={{ headerShown: false, presentation: 'modal' }}
+        />
       </Stack>
-      <Box className='w-full items-center px-4'>
-      <Box className="absolute bottom-4 flex h-auto w-full items-center rounded-2xl border-outline-50 bg-slate-800 py-2 md:hidden">
-        
-        <MobileBottomTabs />
-      </Box>
-      </Box>
-    </SafeAreaView>
-  )
-//   return (
-//     <Tabs>
-//       <Tabs.Screen
-//         name="index"
-//         options={{
-//           tabBarShowLabel: false,
-//           tabBarIcon: ({ color }) => <FeedIcon color={color} />,
-//           headerRight: () => <CreateNewPostLink />,
-//           tabBarTestID: 'feed-tab',
-//           headerShown: false,
-//           tabBarActiveTintColor: "#000"
-//         }}
-//       />
+      <View className="bg-[#161616]">
+        <SafeAreaView>
+          <Box className="w-full items-center bg-transparent">
+            <Box className="absolute bottom-0 flex h-auto w-full items-center border-outline-50 bg-[#161616] pt-4 md:hidden">
+              <MobileBottomTabs />
+            </Box>
+          </Box>
+        </SafeAreaView>
+      </View>
+    </View>
+  );
+  //   return (
+  //     <Tabs backBehavior="history">
+  //       <Tabs.Screen
+  //         name="index"
+  //         options={{
+  //           lazy:false,
+  //           tabBarShowLabel: false,
+  //           tabBarIcon: ({ color }) => <House color={color} />,
+  //           headerRight: () => <CreateNewPostLink />,
+  //           tabBarTestID: 'feed-tab',
+  //           headerShown: false,
+  //           tabBarActiveTintColor: "#000"
+  //         }}
+  //       />
 
-//       <Tabs.Screen
-//         name="settings"
-//         options={{
-//           href: null,
-//           title: 'Settings',
-//           headerShown: false,
-//           tabBarIcon: ({ color }) => <SettingsIcon color={color} />,
-//           tabBarTestID: 'settings-tab',
-//         }}
-//       />
-//       <Tabs.Screen
-//         name="events"
-//         options={{
-//           tabBarShowLabel: false,
-//           tabBarIcon: ({color }) => <Calendar color={color} />,
-//           headerShown: false,
-//           tabBarActiveTintColor: "#000"
-//         }}
-//       />
-//       <Tabs.Screen 
-//         name="new-post"
-//         options={{
-//           tabBarIcon: ({ color }) => <CirclePlus color={color} />,
-//           headerShown: false,
-//           tabBarActiveTintColor: "#000",
-//           tabBarShowLabel: false,
-//         }}
-//       />
+  //       <Tabs.Screen
+  //         name="settings"
+  //         options={{
+  //           href: null,
+  //           title: 'Settings',
+  //           headerShown: false,
+  //           tabBarIcon: ({ color }) => <SettingsIcon color={color} />,
+  //           tabBarTestID: 'settings-tab',
+  //         }}
+  //       />
+  //       <Tabs.Screen
+  //         name="events"
+  //         options={{
+  //           lazy:false,
+  //           tabBarShowLabel: false,
+  //           tabBarIcon: ({color }) => <Calendar color={color} />,
+  //           headerShown: true,
+  //           tabBarActiveTintColor: "#000",
 
-//       <Tabs.Screen
-//       name="p/[id]"
-//       options={{
-//         href: null
-//       }}
-// />
-//       <Tabs.Screen
-//         name="[profile]"
-//         options={{
-//           href: `/${data?.username}`,
-//           tabBarShowLabel: false,
-//           tabBarIcon: ({color }) => <UserIcon color={color} />,
-//           tabBarActiveTintColor: "#000"
-//         }}
-//       />
-//     </Tabs>
-//   );
+  //         }}
+  //       />
+  //       <Tabs.Screen
+  //         name="new-post"
+  //         options={{
+  //           lazy:false,
+  //           tabBarIcon: ({ color }) => <CirclePlus color={color} />,
+  //           headerShown: false,
+  //           tabBarActiveTintColor: "#000",
+  //           tabBarShowLabel: false,
+  //         }}
+  //       />
+
+  //       <Tabs.Screen
+  //       name="p/[id]"
+  //       options={{
+  //         lazy:false,
+  //         href: null
+  //       }}
+  // />
+  //       <Tabs.Screen
+  //         name="[profile]"
+  //         options={{
+  //           href: "/coreykogan",
+  //           lazy:false,
+  //           // href: `/${data?.username}`,
+  //           tabBarShowLabel: false,
+  //           tabBarIcon: ({color }) => <UserIcon color={color} />,
+  //           tabBarActiveTintColor: "#000"
+  //         }}
+  //       />
+  //     </Tabs>
+  //   );
 }
 
-
-
-
-
 const MobileBottomTabs = () => {
+  const { data } = useUser();
 
-  const token = useAuth().token?.access;
-  const { data } = useUser({ variables: { token: token! } });
-
-  const pathname = usePathname()
+  const pathname = usePathname();
   const bottomTabs = [
     {
       icon: House,
-      label: "Home",
-      href: "/"
+      label: 'Home',
+      href: '/',
     },
+    {
+      icon: Search,
+      label: 'Search',
+      href: '/search',
+    },
+
+    {
+      icon: Plus,
+      label: 'Post',
+      href: '/new-post',
+    },
+    // {
+    //   icon: MessageCircle,
+    //   label: 'Messages',
+    //   href: '/messages',
+    // },
     {
       icon: Calendar,
-      label: "Events",
-      href: "/events"
+      label: 'Events',
+      href: '/events',
     },
-    {
-      icon: CirclePlus,
-      label: "Post",
-      href: "/new-post"
-    },
-  
     {
       icon: UserIcon,
-      label: "Profile",
-      href: "/" + data?.username
+      label: 'Profile',
+      href: '/(app)/[profile]',
+      active: pathname === `/${data?.username}`,
+      params: {
+        profile: data?.username,
+      },
+      replace: true,
     },
   ];
-  
+
   return (
-
-      <HStack className="w-full content-center justify-between px-6 py-3 md:hidden">
-        {bottomTabs.map((tab: any) => {
-          return (
-            <Link href={tab.href}
-              key={tab.label}
-              
-              disabled={tab.disabled}
-            >
-              <VStack className="items-center">
-                <Icon
-                  as={tab.icon}
-                  size="lg"
-                  
-                  className={` ${
-                    pathname === tab.href
-                      ? "text-sky-400"
-                      : "text-slate-300"
-                  }`}
-                />
-                
-              </VStack>
-            </Link>
-          );
-        })}
-      </HStack>
-
-      
+    <HStack className="w-full flex-1 content-center justify-between py-4 shadow-md">
+      {bottomTabs.map((tab: any) => {
+        return (
+          <VStack className="w-1/5 items-center" key={tab.href}>
+            {tab.label === 'Post' ? (
+              <Box
+                style={{ width: 60, height: 60 }}
+                className="absolute -top-5 flex-1 items-center justify-center rounded-md"
+              >
+                <Link
+                  href={tab.href}
+                  key={tab.label}
+                  disabled={tab.disabled}
+                  className="relative "
+                >
+                  <LinearGradient
+                    start={{ x: 0, y: 0.5 }}
+                    style={{
+                      borderRadius: 12,
+                      height: 35,
+                      width: 50,
+                      justifyContent: 'center',
+                      left: 0,
+                      alignItems: 'center',
+                    }}
+                    colors={['#8b5cf6', '#7c3aed', '#6d28d9']}
+                  >
+                    <Icon
+                      as={tab.icon}
+                      size="xl"
+                      className={` ${
+                        pathname === tab.href ? 'text-slate-300' : 'text-white'
+                      }`}
+                    />
+                  </LinearGradient>
+                </Link>
+              </Box>
+            ) : (
+              <Link
+                href={{
+                  pathname: tab.href,
+                  params: tab.params,
+                }}
+                key={tab.label}
+                disabled={tab.disabled}
+              >
+                <Box>
+                  {tab.label === 'Profile' && data && data.avatar ? (
+                   
+                      <Avatar size="custom" className={`bg-primary-600 ${tab.active ?? pathname === tab.href ? "border-2 border-violet-400" : ""}`}>
+                      <AvatarImage
+                        alt="Profile Image"
+                        source={{
+                          uri: `${data.avatar.url}`,
+                        }}
+                      />
+                    </Avatar>
+                   
+                  ) : (
+                    <Icon
+                      as={tab.icon}
+                      size="2xl"
+                      className={` ${
+                        (tab.active ?? pathname === tab.href)
+                          ? 'text-violet-400'
+                          : 'text-slate-300'
+                      }`}
+                    />
+                  )}
+                </Box>
+              </Link>
+            )}
+          </VStack>
+        );
+      })}
+    </HStack>
   );
 };

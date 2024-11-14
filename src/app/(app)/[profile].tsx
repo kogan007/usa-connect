@@ -1,13 +1,29 @@
-import { Link, useLocalSearchParams } from 'expo-router';
+import { Link, useLocalSearchParams, useNavigation } from 'expo-router';
 import {
-  Ellipsis,
-  Inbox,
-  type LucideIcon,
-  Menu,
-  MessageCircle,
-  UserRoundPlus,
+  ArrowLeft,
+  Bookmark,
+  Heart,
+  ImageIcon,
+  LucideCalendar,
+  MailIcon,
+  MapPin,
+  MenuIcon,
+  Newspaper,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
+import {
+  type LayoutChangeEvent,
+  RefreshControl,
+  StatusBar,
+} from 'react-native';
+import { usePagerView } from 'react-native-pager-view/src/usePagerView';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import MasonryList from 'reanimated-masonry-list';
 
 import {
   type Post as PostType,
@@ -15,150 +31,186 @@ import {
   useUser,
   useUserByUsername,
 } from '@/api';
-import { Avatar, AvatarBadge, AvatarImage } from '@/components/ui/avatar';
+import Follow from '@/components/follow';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
-import { Center } from '@/components/ui/center';
 import { Divider } from '@/components/ui/divider';
-import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
-import { ChevronRightIcon, GlobeIcon, Icon } from '@/components/ui/icon';
 import { Image } from '@/components/ui/image';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { useAuth } from '@/core';
 import { SafeAreaView, ScrollView, View } from '@/ui';
 
 interface UserStats {
-  friends: string;
-  friendsText: string;
+  following: string;
+  followingText: string;
   followers: string;
   followersText: string;
   posts: string;
   postsText: string;
+  likes: number;
+  likesText: string;
 }
 
-interface AccountCardType {
-  iconName: LucideIcon | typeof Icon;
-  subText: string;
-  endIcon: LucideIcon | typeof Icon;
-}
-const accountData: AccountCardType[] = [
-  {
-    iconName: Inbox,
-    subText: 'Настройки',
-    endIcon: ChevronRightIcon,
-  },
-  {
-    iconName: GlobeIcon,
-    subText: 'Уведомления',
-    endIcon: ChevronRightIcon,
-  },
-];
-
-export default function Profile() {
-  const { profile } = useLocalSearchParams();
-  const { data } = useUserByUsername({
-    variables: { username: profile as string },
-  });
-  const token = useAuth().token?.access;
-  const { data: loggedInUser } = useUser({ variables: { token: token! } });
-
-  const userData: UserStats[] = [
-    {
-      friends: '45K',
-      friendsText: 'Друзей',
-      followers: String(data?.followerCount),
-      followersText: 'Подписчиков',
-      posts: String(data?.postCount),
-      postsText: 'Постов',
-    },
-  ];
-
+const HeaderBack = () => {
+  const navigation = useNavigation();
   return (
-    <SafeAreaView className="size-full">
-      <VStack className="size-full bg-background-0">
+    <Pressable onPress={navigation.goBack}>
+      <ArrowLeft className="text-black" />
+    </Pressable>
+  );
+};
+
+const ProfileHeader = ({ data, loggedInUser }: any) => {
+  return (
+    <SafeAreaView>
+    <HStack className="w-full justify-between px-4">
+      <HeaderBack />
+      {data && loggedInUser!.id === data.user.id && (
         <HStack className="flex justify-end px-2">
           <Link asChild href="/settings">
             <Pressable>
-              <Menu className="text-black" />
+              <MenuIcon className="text-black" />
             </Pressable>
           </Link>
         </HStack>
+      )}
+    </HStack>
+  </SafeAreaView>
+  )
+}
+export default function Profile() {
+  const { profile } = useLocalSearchParams();
+
+  const { data: loggedInUser } = useUser();
+  const { data, isRefetching, refetch } = useUserByUsername({
+    enabled: !!loggedInUser,
+    variables: {
+      username: profile as string,
+      loggedInUsername: loggedInUser?.username!,
+    },
+  });
+
+  const userData: UserStats[] = [
+    {
+      following: data ? String(data?.user.followingCount) : '0',
+      followingText: 'Подписки',
+      followers: data ? String(data?.user.followersCount) : '0',
+      followersText: 'Подписчики',
+      posts: data ? String(data?.user.postsCount) : '0',
+      postsText: 'Посты',
+      likes: data?.likesCount ?? 0,
+      likesText: 'Лайки',
+    },
+  ];
+
+  const storiesCount = data?.user.storiesCount;
+
+  return (
+    <View>
+      <StatusBar barStyle="dark-content" />
+      <ProfileHeader data={data} loggedInUser={loggedInUser} />
+      <VStack className="size-full bg-background-0">
         <VStack className="size-full">
           <HStack className="size-full">
             <VStack className="w-full flex-1">
               <VStack className="mb-16 size-full">
                 <ScrollView
                   showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ paddingBottom: 160, flexGrow: 1 }}
+                  contentContainerStyle={{ paddingBottom: 160 }}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefetching}
+                      onRefresh={refetch}
+                    />
+                  }
                 >
-                  <VStack className="size-full pb-8" space="2xl">
-                    <Center className="mt-4 w-full pb-2 md:mt-14 md:px-10 md:pt-6">
-                      <VStack space="lg" className="items-center">
-                        <Avatar size="2xl" className="bg-primary-600">
-                          {data && (
+                  <VStack className="size-full">
+                    <VStack className="px-6">
+                      <HStack className="flex-1">
+                        <Link
+                          href={{
+                            pathname: '/stories/[profile]',
+                            params: { profile: data ? data.user.username : "" }
+                          }}                          
+                          disabled={storiesCount ? storiesCount < 1 : true}
+                          className="rounded-full border-2 border-violet-500 p-1"
+                        >
+                          <Avatar size="2xl" className="bg-primary-600">
+                            {data && data.user.avatar && (
+                              <>
+                                <AvatarImage
+                                  alt="Profile Image"
+                                  source={{
+                                    uri: `${data.user.avatar.url}`,
+                                  }}
+                                />
+                              </>
+                            )}
+                          </Avatar>
+                        </Link>
+
+                        <HStack className="ml-auto mt-auto items-center gap-2">
+                          {data && loggedInUser!.id !== data.user.id ? (
                             <>
-                              <AvatarImage
-                                alt="Profile Image"
-                                source={{
-                                  uri: `http://localhost:3000${data.user.avatar.url}`,
-                                }}
+                              <Button
+                                size="noHeight"
+                                className="size-12 rounded-full bg-gray-100"
+                              >
+                                <ButtonIcon
+                                  size="md"
+                                  as={MailIcon}
+                                  className="text-black"
+                                />
+                              </Button>
+                              <Follow
+                                username={profile as string}
+                                amFollowing={data.user.amFollowing}
                               />
-                              <AvatarBadge />
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                size="noHeight"
+                                className="size-12 rounded-full bg-gray-100"
+                              >
+                                <ButtonIcon
+                                  size="md"
+                                  as={LucideCalendar}
+                                  className="text-black"
+                                />
+                              </Button>
+                              <Button
+                                className="rounded-full bg-purple-500"
+                                size="xl"
+                              >
+                                <ButtonText>Edit Profile</ButtonText>
+                              </Button>
                             </>
                           )}
-                        </Avatar>
-                        <VStack className="w-full items-center gap-1">
-                          <Text size="2xl" className="text-dark font-roboto">
-                            {data?.user.username}
-                          </Text>
-                          <Text className="text-typograpphy-700 font-roboto text-sm">
+                        </HStack>
+                      </HStack>
+                      <VStack className="w-full gap-1">
+                        <Text size="2xl" className="text-dark font-roboto">
+                          {data?.user.username}
+                        </Text>
+                        <HStack className="items-center">
+                          <MapPin size={12} className="text-black" />
+                          <Text className="text-typograpphy-700 ml-1 font-roboto text-sm">
                             {data?.user.city.name}
                           </Text>
-                        </VStack>
+                        </HStack>
+                      </VStack>
+                    </VStack>
+                    <VStack className="mb-4 items-center">
+                      {userData.map((item, index) => (
+                        <UserData item={item} key={index} />
+                      ))}
+                    </VStack>
 
-                        <>
-                          {userData.map((item, index) => (
-                            <UserData item={item} key={index} />
-                          ))}
-                        </>
-                        {data && loggedInUser!.id !== data.user.id && (
-                          <HStack className="w-full items-center gap-1">
-                            <Button
-                              variant="outline"
-                              className="flex items-center"
-                            >
-                              <ButtonText>Follow</ButtonText>
-                              <ButtonIcon as={UserRoundPlus} />
-                            </Button>
-                            <Button>
-                              <ButtonIcon as={MessageCircle} />
-                            </Button>
-                            <Button>
-                              <ButtonIcon as={Ellipsis} />
-                            </Button>
-                          </HStack>
-                        )}
-                      </VStack>
-                    </Center>
-                    <VStack space="2xl">
-                      <Heading className="mx-6 font-roboto" size="xl">
-                        Посты
-                      </Heading>
-                      {data && <Posts userId={data.user.id} />}
-                    </VStack>
-                    <VStack className="mx-6" space="2xl">
-                      <Heading className="font-roboto" size="xl">
-                        Аккаунт
-                      </Heading>
-                      <VStack className="border-border-300 items-center justify-between rounded-xl border px-4 py-2">
-                        {accountData.map((item, index) => (
-                          <AccountData item={item} key={index} index={index} />
-                        ))}
-                      </VStack>
-                    </VStack>
+                    {data && <PostSwitcher username={data.user.username} />}
                   </VStack>
                 </ScrollView>
               </VStack>
@@ -166,18 +218,130 @@ export default function Profile() {
           </HStack>
         </VStack>
       </VStack>
-      {/* <MobileFooter footerIcons={bottomTabsList} /> */}
-    </SafeAreaView>
+    </View>
   );
 }
 
-const Posts = ({ userId }: { userId: number }) => {
+const PostSwitcher = ({ username }: { username: string }) => {
+  const { AnimatedPagerView, ref, setPage, ...rest } = usePagerView();
+
+  const [tabDimensions, setTabDimensions] = useState({ 0: 0, 1: 0, 2: 0 });
+  const translateX = useSharedValue(0);
+
+  const onLayout = (event: LayoutChangeEvent, tab: number) => {
+    const layout = event.nativeEvent.layout;
+    setTabDimensions((state) => ({ ...state, [tab]: layout.x }));
+  };
+
+  const changeTab = (page: 0 | 1 | 2) => {
+    translateX.value = withSpring(tabDimensions[page], {
+      damping: 50,
+    });
+    setPage(page);
+  };
+
+  return (
+    <VStack>
+      <HStack>
+        <Animated.View
+          className="absolute bottom-0 h-0.5 w-1/3 bg-[#3A3248]"
+          style={{
+            transform: [{ translateX }],
+          }}
+        />
+        <Pressable
+          onLayout={(e) => onLayout(e, 0)}
+          onPress={() => changeTab(0)}
+          className="flex w-1/3 items-center"
+        >
+          <Box className="px-2 pb-2">
+            <ImageIcon className="border-b text-black" />
+          </Box>
+        </Pressable>
+
+        <Pressable
+          onLayout={(e) => onLayout(e, 1)}
+          onPress={() => changeTab(1)}
+          className="flex w-1/3 items-center"
+        >
+          <Box className="px-2 pb-2">
+            <Newspaper className="text-black" />
+          </Box>
+        </Pressable>
+        <Pressable
+          onLayout={(e) => onLayout(e, 2)}
+          onPress={() => changeTab(2)}
+          className="flex w-1/3 items-center"
+        >
+          <Box className="px-2 pb-2">
+            <Bookmark className="text-black" />
+          </Box>
+        </Pressable>
+      </HStack>
+      <View className="h-full flex-1 bg-gray-100">
+        <AnimatedPagerView
+          ref={ref}
+          {...rest}
+          onPageScroll={(e) => {
+            translateX.value = withSpring(
+              interpolate(
+                e.nativeEvent.offset + e.nativeEvent.position,
+                [0, 2],
+                [tabDimensions[0], tabDimensions[2]],
+                Extrapolation.CLAMP,
+              ),
+              {
+                damping: 50,
+              },
+            );
+          }}
+          style={{ width: '100%' }}
+          initialPage={0}
+        >
+          <Posts key={1} username={username} />
+          <TextPosts key={2} username={username} />
+          <View key={3}><Text>Hello</Text></View>
+        </AnimatedPagerView>
+      </View>
+    </VStack>
+  );
+};
+
+const TextPosts = ({ username }: { username: string }) => {
+  const {
+    data: posts,
+    isError,
+    isPending,
+  } = usePosts({ variables: { username, textOnly: true, sort: 'desc' } });
+  if (isError) {
+    return <Text>Error</Text>;
+  }
+  if (isPending) {
+    return <Text>Loading</Text>;
+  }
+  return (
+    <VStack className="items-center justify-between">
+      <View className="flex w-full">
+        {posts.map((post) => (
+          <VStack key={post.id}>
+            <HStack>
+              <Text>{post.content}</Text>
+            </HStack>
+          </VStack>
+        ))}
+      </View>
+    </VStack>
+  );
+};
+
+const Posts = ({ username }: { username: string }) => {
   const {
     data: posts,
     isPending,
-    // refetch,
+    isError,
+    refetch,
   } = usePosts({
-    variables: { userId: userId },
+    variables: { username, textOnly: false, sort: 'desc' },
   });
 
   // const [refreshing, setRefreshing] = useState(false);
@@ -187,63 +351,48 @@ const Posts = ({ userId }: { userId: number }) => {
   //   refetch();
   //   setRefreshing(false);
   // }, [refetch]);
-
+  if (isError) {
+    return <Text>Error</Text>;
+  }
   if (isPending) {
     return <Text>Loading</Text>;
   }
-
+  
   return (
-    <VStack className="items-center justify-between">
-      <View className="flex w-full flex-row flex-wrap">
-        {posts!.map((post) => (
-          <Post post={post} key={post.id} />
-        ))}
-      </View>
+    <VStack className="items-center justify-between px-4 pt-6">
+      <MasonryList
+        onRefresh={refetch}
+        data={posts}
+        keyExtractor={(item) => item.id}
+        numColumns={3}
+        renderItem={({ item }) => <Post post={item as PostType} />}
+        style={{ gap: 6 }}
+      />
     </VStack>
   );
 };
 
 const Post = ({ post }: { post: PostType }) => {
   return (
-    <View className="w-1/3">
+    <View className="mb-2">
       <Box>
         <Link href={`/p/${post.id}`} asChild>
-          <Pressable>
+          <Pressable className="relative">
             <Image
-              source={`http://localhost:3000${post.image.url}`}
+              source={`${post.media[0].image.url}`}
               alt={'test'}
-              size="none"
-              className="h-40"
+              className="h-52 w-full rounded-lg"
               resizeMode="cover"
             />
+
+            <Box className="absolute bottom-0 left-0 flex flex-row items-center gap-2 px-4 pb-2">
+              <Heart size={16} className="text-white" />
+              <Text className="text-white">{post.likesCount}</Text>
+            </Box>
           </Pressable>
         </Link>
       </Box>
     </View>
-  );
-};
-
-const AccountData = ({
-  item,
-  index,
-}: {
-  item: AccountCardType;
-  index: number;
-}) => {
-  return (
-    <>
-      <HStack
-        space="2xl"
-        className="w-full flex-1 items-center justify-between px-2 py-3"
-      >
-        <HStack className="items-center" space="md">
-          <Icon as={item.iconName} className="stroke-[#747474]" />
-          <Text size="lg">{item.subText}</Text>
-        </HStack>
-        <Icon as={item.endIcon} />
-      </HStack>
-      {accountData.length - 1 !== index && <Divider className="my-1" />}
-    </>
   );
 };
 
@@ -252,10 +401,10 @@ const UserData = ({ item }: { item: UserStats }) => {
     <HStack className="items-center gap-1">
       <VStack className="items-center px-4 py-3" space="xs">
         <Text className="text-dark items-center justify-center font-roboto font-semibold">
-          {item.friends}
+          {item.following}
         </Text>
-        <Text className="text-dark font-roboto text-xs">
-          {item.friendsText}
+        <Text className="text-dark text-md font-roboto">
+          {item.followingText}
         </Text>
       </VStack>
       <Divider orientation="vertical" className="h-10" />
@@ -263,7 +412,7 @@ const UserData = ({ item }: { item: UserStats }) => {
         <Text className="text-dark font-roboto font-semibold">
           {item.followers}
         </Text>
-        <Text className="text-dark font-roboto text-xs">
+        <Text className="text-dark text-md font-roboto">
           {item.followersText}
         </Text>
       </VStack>
@@ -273,7 +422,14 @@ const UserData = ({ item }: { item: UserStats }) => {
         <Text className="text-dark font-roboto font-semibold">
           {item.posts}
         </Text>
-        <Text className="text-dark font-roboto text-xs">{item.postsText}</Text>
+        <Text className="text-dark text-md font-roboto">{item.postsText}</Text>
+      </VStack>
+      <Divider orientation="vertical" className="h-10" />
+      <VStack className="items-center px-4 py-3" space="xs">
+        <Text className="text-dark font-roboto font-semibold">
+          {item.likes}
+        </Text>
+        <Text className="text-dark text-md font-roboto">{item.likesText}</Text>
       </VStack>
     </HStack>
   );

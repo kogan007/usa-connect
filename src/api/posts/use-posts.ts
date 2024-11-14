@@ -6,36 +6,73 @@ import type { Post } from './types';
 
 type Response = Post[];
 type Variables = {
-  userId?: number;
-  cityId?: number;
+  username?: string;
+  cityId?: string;
+  textOnly?: boolean
+  showAllPosts?: boolean,
+  sort?: "asc" | "desc"
 };
 
 export const usePosts = createQuery<Response, Variables, AxiosError>({
   queryKey: ['posts'],
   fetcher: (variables) => {
+
     return client
       .post('', {
         variables: {
-          userId: String(variables.userId),
-          cityId: String(variables.cityId),
-        },
+          orderBy: {
+            createdAt: variables.sort ?? "asc",
+          },
+          ...(variables.username || variables.cityId) && {
+            whereInput: {
+              ...variables.username && ({
+                createdBy: {
+                  username: {
+                    equals: variables.username
+                  }
+                },
+              }),
+              ...typeof variables.textOnly !== "undefined"&& ({
+                textOnly: {
+                  equals: variables.textOnly
+                }
+              })
+          }},
+          },
+          
         query: `
-        query GetPosts(${variables.userId ? '$userId: JSON,' : ''} ${variables.cityId ? '$cityId: JSON' : ''}) {
-          Posts(${variables.userId ? 'where: { createdBy: { equals: $userId }},' : ''}
-          ${variables.cityId ? 'where: { city: { equals: $cityId }},' : ''}
-          ) {
-            docs {
-              description
-              id
-              createdAt
-              image {
-                url
+          query Posts($whereInput: PostWhereInput!, $orderBy: [PostOrderByInput!]) {
+              posts(
+                  where: $whereInput
+                  orderBy: $orderBy
+              ) {
+                  id
+                  content
+                  createdAt
+                  media(take: 1) {
+                    id
+                    image {
+                      url
+                      width
+                      height
+                    }
+                  }
+                  createdBy {
+                      id
+                      username
+                      avatar {
+                          url
+                      }
+                  }
+                  likesCount
               }
-            }
           }
-        }
+
       `,
       })
-      .then((res) => res.data.data.Posts.docs)
+      .then((res) => {
+
+        return res.data.data.posts
+      })
   },
 });
